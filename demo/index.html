@@ -122,6 +122,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .tr .t{min-width:0}.tr b{display:block;font-weight:700;line-height:1.3}
 .tr small{display:block;font:500 13.5px/1.3 var(--script);color:var(--pink);margin-top:2px}
 .tr .d{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.tr .d.sp{color:#1ED760;display:grid;place-items:center}.tnote{margin:4px 0 0;color:var(--muted);font-size:13px;text-align:center}
 
 /* wheel */
 .wheel{position:relative;width:min(360px,84vw);aspect-ratio:1;max-width:100%}
@@ -218,7 +219,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 <section class="scene" data-s="2" hidden><div class="inner">
   <span class="script r" style="--i:0">a little bit of maths</span>
   <div class="age r" style="--i:1" id="age">17</div>
-  <h2 class="r" style="--i:2">years of being wonderful</h2>
+  <h2 class="r" style="--i:2" id="ageLine">years of being wonderful</h2>
   <div class="panel r" style="--i:3">
     <div class="stats">
       <div class="stat hl"><b data-k="days">0</b><span>days on Earth</span></div>
@@ -250,7 +251,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <h2 class="r" style="--i:1">Your birthday playlist</h2>
   <div class="panel r" style="--i:2"><div class="music">
     <div class="deck"><div class="record"><div class="disc" id="disc"></div><div class="label"><small id="nowLabel">pick a song</small></div></div><div class="arm" id="arm" aria-hidden="true"></div><div class="bar"><i id="prog"></i></div></div>
-    <ul class="tracks" id="tracks"></ul>
+    <ul class="tracks" id="tracks"></ul><p class="tnote" id="tnote" hidden></p>
   </div></div>
   <button class="save r" style="--i:3" data-save="playlist" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Save this page</button>
   <button class="next r" style="--i:4" data-next type="button">One more thing <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -385,8 +386,8 @@ function makeHorizon(w,h,dpr){ // dark land: rolling ground, bushes and a few pa
 }
 function sampleName(text,w,h){ // stars along a thin rendering of the name, joined like a real constellation drawing
   const off=document.createElement("canvas"),oc=off.getContext("2d");off.width=Math.round(w);off.height=Math.round(h);
-  const fs=Math.min(w*.9/(text.length*.6),h*.72),cy=h*.52;oc.textAlign="center";oc.textBaseline="middle";oc.font=`300 ${fs}px Sora, system-ui, sans-serif`;oc.fillStyle="#fff";oc.fillText(text,w/2,cy);
-  const d=oc.getImageData(0,0,off.width,off.height).data,step=Math.max(10,Math.round(fs/7.5)),cand=[];
+  let fs=Math.min(w*.9/(text.length*.6),h*.72),cy=h*.52;oc.textAlign="center";oc.textBaseline="middle";oc.font=`300 ${fs}px Sora, system-ui, sans-serif`;const tw=oc.measureText(text).width;if(tw>w*.84){fs*=w*.84/tw;oc.font=`300 ${fs}px Sora, system-ui, sans-serif`}oc.fillStyle="#fff";oc.fillText(text,w/2,cy);
+  const d=oc.getImageData(0,0,off.width,off.height).data,step=Math.max(10,Math.round(fs/(text.length>6?8.5:7.5))),cand=[];
   for(let y=0;y<off.height;y+=2)for(let x=0;x<off.width;x+=2)if(d[(y*off.width+x)*4+3]>150)cand.push([x,y]);
   for(let k=cand.length-1;k>0;k--){const m=Math.floor(Math.random()*(k+1));[cand[k],cand[m]]=[cand[m],cand[k]]}
   const pts=[];for(const[x,y]of cand)if(pts.every(q=>Math.hypot(q[0]-x,q[1]-y)>step))pts.push([x,y]);
@@ -578,7 +579,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-next]");if
 $("#back").onclick=()=>go(cur-1);$("#replay").onclick=()=>go(1);
 
 /* 1 · name */
-$("#wishText").textContent=CONFIG.wish;if(CONFIG.photoEyebrow)$("#phEyebrow").textContent=CONFIG.photoEyebrow;if(CONFIG.photoTitle)$("#phTitle").textContent=CONFIG.photoTitle;$("#endName").textContent=CONFIG.name;$("#fromText").textContent=CONFIG.from;
+$("#wishText").textContent=CONFIG.wish;if(CONFIG.ageLine)$("#ageLine").textContent=CONFIG.ageLine;if(CONFIG.photoEyebrow)$("#phEyebrow").textContent=CONFIG.photoEyebrow;if(CONFIG.photoTitle)$("#phTitle").textContent=CONFIG.photoTitle;$("#endName").textContent=CONFIG.name;$("#fromText").textContent=CONFIG.from;
 function buildBday(){let c=0;const sp=(txt,cls)=>`<span class="${cls||""}">`+txt.split(" ").map(w=>w?`<span class="wd">`+[...w].map(ch=>`<span class="ch" aria-hidden="true" style="--c:${c++}">${ch}</span>`).join("")+"</span>":"").join(" ")+"</span>";
   $("#bday").innerHTML=sp("Happy birthday, ")+sp(CONFIG.name,"nm");$("#bday").setAttribute("aria-label","Happy birthday, "+CONFIG.name);}
 
@@ -643,10 +644,14 @@ const MUSIC=(function(){
   const ul=$("#tracks"),disc=$("#disc"),arm=$("#arm"),lab=$("#nowLabel"),prog=$("#prog");
   const fmt=sec=>`${Math.floor(sec/60)}:${String(Math.round(sec%60)).padStart(2,"0")}`;
   const play='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',pause='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
-  ul.innerHTML=CONFIG.songs.map((s,i)=>`<li><button class="tr" type="button" aria-pressed="false" data-i="${i}"><span class="pl">${play}</span><span class="t"><b>${s.t}</b><small>${s.n}</small></span><span class="d">${fmt(AUDIO.beats(s)*60/s.bpm+1)}</span></button></li>`).join("");
+  const spi='<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 14.4a.62.62 0 0 1-.86.2c-2.35-1.43-5.3-1.76-8.79-.96a.62.62 0 1 1-.28-1.21c3.8-.87 7.07-.5 9.72 1.11.3.18.39.57.21.86zm1.22-2.73a.78.78 0 0 1-1.07.26c-2.69-1.65-6.79-2.13-9.97-1.16a.78.78 0 1 1-.45-1.49c3.63-1.1 8.15-.57 11.24 1.33.37.22.48.7.25 1.06zm.1-2.84C14.7 8.92 9.37 8.75 6.29 9.68a.94.94 0 1 1-.54-1.8c3.53-1.07 9.42-.86 13.13 1.34a.94.94 0 0 1-.96 1.61z"/></svg>';
+  const LINKS=CONFIG.songs.some(s=>s.sp);if(LINKS){const t=$("#tnote");t.textContent="Tap a song to play it on Spotify";t.hidden=false;lab.textContent="tap a song";}
+  ul.innerHTML=CONFIG.songs.map((s,i)=>`<li><button class="tr" type="button" aria-pressed="false" data-i="${i}"${s.sp?` aria-label="${s.t} by ${s.a}, opens Spotify"`:""}><span class="pl">${play}</span><span class="t"><b>${s.t}</b><small>${s.sp?s.a:s.n}</small></span>${s.sp?`<span class="d sp">${spi}</span>`:`<span class="d">${fmt(AUDIO.beats(s)*60/s.bpm+1)}</span>`}</button></li>`).join("");
   let cur=null,raf;
-  function stop(){if(cur){cur.h.stop();cur=null;AUDIO.duck(false)}cancelAnimationFrame(raf);disc.classList.remove("on");arm.classList.remove("on");lab.textContent="pick a song";prog.style.width="0";ul.querySelectorAll(".tr").forEach(b=>{b.setAttribute("aria-pressed","false");b.querySelector(".pl").innerHTML=play});}
-  ul.addEventListener("click",e=>{const b=e.target.closest(".tr");if(!b)return;const i=+b.dataset.i,was=cur&&cur.i===i;stop();if(was)return;
+  function stop(){if(cur){cur.h.stop();cur=null;AUDIO.duck(false)}cancelAnimationFrame(raf);disc.classList.remove("on");arm.classList.remove("on");lab.textContent=LINKS?"tap a song":"pick a song";prog.style.width="0";ul.querySelectorAll(".tr").forEach(b=>{b.setAttribute("aria-pressed","false");b.querySelector(".pl").innerHTML=play});}
+  ul.addEventListener("click",e=>{const b=e.target.closest(".tr");if(!b)return;const i=+b.dataset.i,was=cur&&cur.i===i;
+    if(CONFIG.songs[i].sp){window.open(CONFIG.songs[i].sp,"_blank","noopener");disc.classList.add("on");arm.classList.add("on");lab.textContent=CONFIG.songs[i].t;return;}
+    stop();if(was)return;
     AUDIO.duck(true);const s=CONFIG.songs[i],h=AUDIO.playSong(s);cur={i,h};b.setAttribute("aria-pressed","true");b.querySelector(".pl").innerHTML=pause;disc.classList.add("on");arm.classList.add("on");lab.textContent=s.t;
     (function tick(){if(!cur)return;const k=Math.min(1,(h.now()-h.t0)/h.total);prog.style.width=(k*100)+"%";if(k>=1){stop();return}raf=requestAnimationFrame(tick)})();});
   return{stop};
@@ -690,7 +695,7 @@ function backdrop(x,W,H,o={}){ // night sky, Milky Way, stars, moon and palm hor
   const hh=H*.105;x.drawImage(makeHorizon(W,hh,1),0,H-hh);const fg=x.createLinearGradient(0,H-hh*1.6,0,H-hh*.5);fg.addColorStop(0,"rgba(1,2,8,0)");fg.addColorStop(1,"rgba(1,2,8,.6)");x.fillStyle=fg;x.fillRect(0,H-hh*1.6,W,hh*1.6);
 }
 const grainOver=(x,W,H)=>{const im=x.getImageData(0,0,W,H),p=im.data;for(let i=0;i<p.length;i+=4){const nn=(Math.random()-.5)*8;p[i]+=nn;p[i+1]+=nn;p[i+2]+=nn}x.putImageData(im,0,0)};
-const gold=(x,y0,y1)=>{const g=x.createLinearGradient(0,y0,0,y1);g.addColorStop(0,"#FFF0C8");g.addColorStop(.55,"#FFD27A");g.addColorStop(1,"#FFA9D2");return g};
+const gold=()=>"#FFD27A";
 const rr=(x,a,b,w,h,r)=>{x.beginPath();if(x.roundRect)x.roundRect(a,b,w,h,r);else x.rect(a,b,w,h)};
 const fitFont=(x,txt,max,size,tpl)=>{let s=size;x.font=tpl(s);while(x.measureText(txt).width>max&&s>20){s-=2;x.font=tpl(s)}return s};
 const bday=born.toLocaleDateString(undefined,{day:"numeric",month:"long"});
@@ -712,7 +717,7 @@ const CARDS={
   async numbers(o){const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");backdrop(x,W,H);x.textAlign="center";
     x.fillStyle="#FFD27A";x.font='600 48px "Shantell Sans", sans-serif';x.fillText("a little bit of maths",W/2,560);
     const v=vals();let stats;
-    if(o.age){x.font="800 300px 'Shantell Sans', sans-serif";x.fillStyle=gold(x,600,880);x.fillText(String(ageNow()),W/2,860);x.fillStyle="#EEF2FF";x.font="700 64px 'Shantell Sans', sans-serif";x.fillText("years of being wonderful",W/2,960,W-120);
+    if(o.age){x.font="800 300px 'Shantell Sans', sans-serif";x.fillStyle=gold(x,600,880);x.fillText(String(ageNow()),W/2,860);x.fillStyle="#EEF2FF";x.font="700 64px 'Shantell Sans', sans-serif";x.fillText(CONFIG.ageLine||"years of being wonderful",W/2,960,W-120);
       stats=[[v.days,"days on Earth"],[v.hours,"hours of being me"],[v.beats,"heartbeats"],[v.laughs,"laughs, at least"],[v.km,"km around the Sun"],[born.toLocaleDateString(undefined,{weekday:"long"}),"the day I arrived"]];}
     else{x.fillStyle="#EEF2FF";x.font="800 92px 'Shantell Sans', sans-serif";x.fillText("My life",W/2,760);x.fillStyle=gold(x,780,880);x.fillText("in numbers",W/2,870);
       stats=[[v.beats,"heartbeats, give or take"],[v.laughs,"laughs, at least"],[v.km,"km travelled around the Sun"],[born.toLocaleDateString(undefined,{weekday:"long"}),"the day I arrived"]];}
@@ -728,13 +733,14 @@ const CARDS={
     footer(x,W,H,o);grainOver(x,W,H);return toBlob(c);},
   async playlist(o){const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");backdrop(x,W,H);x.textAlign="center";
     x.fillStyle="#FFD27A";x.font='600 48px "Shantell Sans", sans-serif';x.fillText("put this on",W/2,500);x.fillStyle="#EEF2FF";x.font="800 80px 'Shantell Sans', sans-serif";x.fillText("My birthday playlist",W/2,600,W-120);
-    const R=200,cx=W/2,cy=860;x.save();x.shadowColor="rgba(0,0,0,.7)";x.shadowBlur=50;x.shadowOffsetY=20;x.beginPath();x.arc(cx,cy,R,0,7);x.fillStyle="#0b0b10";x.fill();x.restore();
+    const NS=CONFIG.songs.length,BIG=NS>6,R=BIG?150:200,cx=W/2,cy=BIG?800:860;x.save();x.shadowColor="rgba(0,0,0,.7)";x.shadowBlur=50;x.shadowOffsetY=20;x.beginPath();x.arc(cx,cy,R,0,7);x.fillStyle="#0b0b10";x.fill();x.restore();
     for(let r=R*.36;r<R;r+=5){x.beginPath();x.arc(cx,cy,r,0,7);x.strokeStyle=r%10<5?"#16161e":"#0d0d12";x.lineWidth=2;x.stroke();}
     x.save();x.beginPath();x.moveTo(cx,cy);x.arc(cx,cy,R,-1.1,-.6);x.closePath();x.fillStyle="rgba(255,255,255,.07)";x.fill();x.restore();
     const lg="#FF9CC8";x.beginPath();x.arc(cx,cy,R*.34,0,7);x.fillStyle=lg;x.fill();x.beginPath();x.arc(cx,cy,8,0,7);x.fillStyle="#01030B";x.fill();
     x.fillStyle="#3A1430";x.font='600 17px "Shantell Sans", sans-serif';x.fillText(CONFIG.name+"'s mix",cx,cy+R*.2,R*.56);
-    x.textAlign="left";CONFIG.songs.forEach((s,i)=>{const y=1150+i*118;x.fillStyle="rgba(255,255,255,.05)";rr(x,110,y-62,W-220,100,26);x.fill();x.fillStyle="#9FAACF";x.font="700 34px 'Shantell Sans', sans-serif";x.fillText(String(i+1),145,y);
-      x.fillStyle="#EEF2FF";fitFont(x,s.t,W-360,40,z=>`700 ${z}px "Shantell Sans", sans-serif`);x.fillText(s.t,210,y-8);x.fillStyle="#FF9CC8";x.font='600 24px "Shantell Sans", sans-serif';x.fillText(s.n,210,y+28,W-360);});
+    x.textAlign="left";const y0=BIG?1040:1150,st=BIG?Math.min(118,Math.floor((1790-y0)/NS)):118,rh=st-14,k=rh/100;
+    CONFIG.songs.forEach((s,i)=>{const y=y0+i*st;x.fillStyle="rgba(255,255,255,.05)";rr(x,110,y-62*k,W-220,rh,22);x.fill();x.fillStyle="#9FAACF";x.font=`700 ${Math.round(34*Math.max(k,.8))}px 'Shantell Sans', sans-serif`;x.fillText(String(i+1),145,y);
+      x.fillStyle="#EEF2FF";fitFont(x,s.t,W-360,Math.round(40*Math.max(k,.8)),z=>`700 ${z}px "Shantell Sans", sans-serif`);x.fillText(s.t,210,y-8*k);x.fillStyle="#FF9CC8";x.font=`600 ${Math.round(24*Math.max(k,.85))}px "Shantell Sans", sans-serif`;x.fillText(s.sp?s.a:s.n,210,y+28*k,W-360);});
     footer(x,W,H,o);grainOver(x,W,H);return toBlob(c);}
 };
 
