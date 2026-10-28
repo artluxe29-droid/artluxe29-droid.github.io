@@ -329,6 +329,7 @@ Object.assign(CONFIG,{
  "name": "Preshy",
  "skyName": "PRECIOUS",
  "born": "2007-11-05",
+ "age": 19,
  "wish": "Preshy, nineteen looks so good on you! You make every room warmer and every day a little brighter, and we thank God for the gift of you. This year, may His favour go ahead of you, may your joy stay loud, and may every quiet prayer in your heart be answered. Keep shining, keep singing, keep being you. Happy birthday, God's favourite baby!",
  "from": "with love, your dear sister & Collins",
  "ageLine": "years of being Preshy",
@@ -425,7 +426,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const born=new Date(CONFIG.born+"T00:00:00");
-const ageNow=()=>{const n=new Date();let y=n.getFullYear()-born.getFullYear();const m=n.getMonth()-born.getMonth();if(m<0||(m===0&&n.getDate()<born.getDate()))y--;return y};
+const ageNow=()=>{if(CONFIG.age)return CONFIG.age;const n=new Date();let y=n.getFullYear()-born.getFullYear();const m=n.getMonth()-born.getMonth();if(m<0||(m===0&&n.getDate()<born.getDate()))y--;return y};
 const toast=(()=>{let t;return msg=>{const el=$("#toast");el.textContent=msg;el.hidden=false;clearTimeout(t);t=setTimeout(()=>el.hidden=true,2400)}})();
 
 /* ======================= shared drawing helpers ======================= */
