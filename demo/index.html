@@ -76,7 +76,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .hint i{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);animation:blink 2s infinite}
 
 /* numbers */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;text-align:left}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;text-align:left}
 .stat{border:1px solid var(--line);border-radius:18px;padding:16px 18px;background:rgba(255,255,255,.03);display:grid;gap:2px;min-width:0}
 .stat b{font:700 clamp(22px,4.4vw,32px)/1.15 var(--head);letter-spacing:-.02em;font-variant-numeric:tabular-nums;word-break:keep-all}
 .stat span{color:var(--muted);font-size:14px}
@@ -157,6 +157,15 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .shprev.loading::after{content:"Making it…";font:600 22px var(--script);color:var(--muted)}
 .shprev .rec{font:800 34px var(--head);color:var(--gold)}.shprev.loading:has(.rec)::after{content:none}
 
+/* question gate and test mode */
+.gfield{display:flex;gap:10px;width:min(420px,100%)}
+.gfield input{flex:1;min-width:0;border:1px solid var(--line);background:rgba(5,12,34,.6);color:var(--ink);border-radius:99px;padding:0 20px;font:600 16px var(--body);min-height:50px}
+.gfield input:focus{outline:2px solid var(--gold);outline-offset:2px}
+.gerr{color:#FFB3C7;font-weight:600}
+.gate.shake .gfield{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.testbar{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:36;background:#3A2A06;color:#FFE3A3;border:1px solid rgba(255,210,122,.5);border-radius:99px;padding:6px 14px;font:600 12px var(--body);white-space:nowrap;pointer-events:none}
+
 /* end */
 .endtitle{font:700 clamp(54px,14vw,110px)/1.1 var(--script);background:linear-gradient(180deg,#FFF0C8,#FFD27A 50%,#FF9CC8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 30px rgba(255,200,120,.25));padding:0 .15em}
 
@@ -164,7 +173,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 @keyframes tup{from{opacity:0;transform:translate(-50%,10px)}}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;height:100%}
 
-@media (max-width:700px){.music{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:12px 14px}.stat b{font-size:clamp(17px,5vw,20px)}.stat span{font-size:13px}}
+@media (max-width:700px){.music{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr;gap:10px}.gfield{flex-direction:column}.stat{padding:12px 14px}.stat b{font-size:clamp(17px,5vw,20px)}.stat span{font-size:13px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 
@@ -185,7 +194,15 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <p class="lead r" style="--i:2">It only shows up once a year. Clear the clouds and take a look.</p>
   <div class="meta r" style="--i:3"><span>Visibility <b>Excellent</b></span><span>Moon <b>Waxing gibbous</b></span><span>Best viewed <b>with sound on</b></span></div>
   <button class="next r" style="--i:4" id="lookUp" type="button">Look up <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
-</div></section>
+</div>
+<form class="inner gate" id="gate" hidden novalidate>
+  <span class="script r" style="--i:0">one thing first</span>
+  <h2 class="r" style="--i:1">This sky was made for one person</h2>
+  <label class="lead r" style="--i:2" for="ga" id="gq"></label>
+  <div class="gfield r" style="--i:3"><input id="ga" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Your answer"><button class="next" type="submit">Unlock</button></div>
+  <p class="note r" style="--i:4" id="gh"></p><p class="gerr" id="ge" role="alert" hidden>Not quite. Try again.</p>
+  <button class="again" id="gskip" type="button" hidden>Test mode: skip the question</button>
+</form></section>
 
 <!-- 1 · her name in the stars -->
 <section class="scene namesc" data-s="1" hidden><div class="inner">
@@ -246,9 +263,9 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <p class="lead r" style="--i:2">Whatever it lands on is real. You get one spin.</p>
   <div class="wheel r" style="--i:3"><div class="pin" id="pin" aria-hidden="true"></div><canvas id="wheel" role="img" aria-label="Prize wheel"></canvas></div>
   <button class="next" id="spinBtn" type="button">Spin the wheel</button>
-  <div class="prize" id="prize" hidden aria-live="polite"><span class="script">you won</span><b id="prizeText"></b></div>
+  <div class="prize" id="prize" hidden aria-live="polite"><span class="script" id="prizeLead">you won</span><b id="prizeText"></b></div>
   <button class="next" id="toCard" type="button" hidden>Make my brag card <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-  <button class="again" id="again" type="button" hidden>Preview only: spin again</button>
+  <button class="again" id="again" type="button" hidden>Test mode: spin again</button>
 </div></section>
 
 <!-- 6 · brag card -->
@@ -275,6 +292,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle"><div class="sheetin">
   <h3 id="shTitle"></h3><div class="shprev loading" id="shPrev"></div><div class="opts" id="shOpts"></div><p class="note" id="shNote"></p>
   <div class="row"><button class="next" id="shSave" type="button">Save</button><button class="next ghost" id="shClose" type="button">Close</button></div></div></div>
+<div class="testbar" id="testbar" hidden>Test mode · she won't see this · nothing you do here counts</div>
 <div class="toast" id="toast" hidden role="status"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
@@ -298,11 +316,26 @@ const CONFIG = {
     {t:"Canon in D",a:"Pachelbel",n:"for slow, soft moments",bpm:72,v:["F#5:2 E5:2 D5:2 C#5:2 B4:2 A4:2 B4:2 C#5:2 D5:2 C#5:2 B4:2 A4:2 G4:2 F#4:2 G4:2 E4:2 D5:1 C#5:1 D5:1 D4:1 C#4:1 A4:1 E4:1 F#4:1 D4:1 D5:1 C#5:1 B4:1 C#5:1 F#5:1 A5:1 B5:1 G5:1 F#5:1 E5:1 G5:1 F#5:1 E5:1 D5:1 C#5:1 B4:1 A4:1 G4:1 F#4:1 E4:1 G4:1 F#4:1 E4:1 D4:4","D3:2 A2:2 B2:2 F#2:2 G2:2 D2:2 G2:2 A2:2 D3:2 A2:2 B2:2 F#2:2 G2:2 D2:2 G2:2 A2:2 D3:2 A2:2 B2:2 F#2:2 G2:2 D2:2 G2:2 A2:2 D3:2 A2:2 B2:2 F#2:2 G2:2 D2:2 G2:2 A2:2 D2:4"]},
     {t:"Brahms' Lullaby",a:"Brahms",n:"to end the day softly",bpm:96,v:["E4:.5 E4:.5 G4:2 E4:.5 E4:.5 G4:2 E4:.5 G4:.5 C5:1 B4:1.5 A4:.5 A4:1 G4:1 D4:.5 E4:.5 F4:1 D4:1 D4:.5 E4:.5 F4:2 D4:.5 F4:.5 B4:.5 A4:.5 G4:1 B4:1 C5:2 C4:.5 C4:.5 C5:2 A4:.5 F4:.5 G4:2 E4:.5 C4:.5 F4:1 G4:1 A4:1 G4:2 C4:.5 C4:.5 C5:2 A4:.5 F4:.5 G4:2 E4:.5 C4:.5 F4:1 E4:.5 D4:.5 C4:3"]}],
   prizes: ["Shawarma on us","Movie night","Ice cream run","Surprise gift","Snacks of your choice","Breakfast in bed","A day with no chores","Pizza party"],
-  previewMode: true             // shows "spin again" for testing; set false for the real thing
+  slug: "demo",                 // part of the link; also keeps each surprise's memory separate
+  secret: {q:"Demo question: what colour is tonight's sky?",hint:"Demo answer: blue",h:[]},  // h = hashed answers; empty = no question
+  prizeIndex: null,             // the prize the wheel always lands on (0-7); null = pick once, then remember
+  testKey: ""                   // your private test link ends with #test-<testKey>
 };
 // ======================================================================
 Object.assign(CONFIG,{
- "previewMode": true
+ "slug": "demo",
+ "testKey": "b6ac4033",
+ "secret": {
+  "q": "Demo question: what colour is tonight's sky?",
+  "hint": "Demo answer: blue",
+  "h": [
+   "367a8e13d1adb6febd65ec83bbc1a382245c89694960874beffb0a8964238523",
+   "ec9b8429c5d143130e724b06149f9afff678801d73aac87a324c55ea685ff986",
+   "c146f271acedbbc3063bfb7c7ad46779a7f90597e248998fbc97cbb944fb013b",
+   "1df9a4e2a3bc6177e71cebd29fbf574b094b156d6ae5e73fcc8c5f6dae6953d8",
+   "165d402a78eabb03f884fa11bd9f33ae091f6478b4eb0f3e4d5ab92f14d28111"
+  ]
+ }
 });
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -317,21 +350,26 @@ const TEMP=["#9DB4FF","#AFC3FF","#CAD8FF","#E4EAFF","#F8F7FF","#FFF4E8","#FFE6C8
 const pickT=()=>{let s=TW.reduce((a,b)=>a+b),r=Math.random()*s;for(let i=0;i<TEMP.length;i++){r-=TW[i];if(r<=0)return TEMP[i]}return TEMP[4]};
 const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
 
-function makeMoon(MR,dpr){ // waxing gibbous, soft terminator, maria, subtle craters, a ray crater
-  const S=Math.ceil(MR*2+4),m=document.createElement("canvas");m.width=S*dpr;m.height=S*dpr;const c=m.getContext("2d");c.scale(dpr,dpr);const C=S/2;
-  c.save();c.beginPath();c.arc(C,C,MR,0,7);c.clip();
-  const bg=c.createRadialGradient(C-MR*.3,C-MR*.3,MR*.1,C,C,MR);bg.addColorStop(0,"#F4F1E8");bg.addColorStop(.7,"#DCD7CA");bg.addColorStop(1,"#B9B3A4");c.fillStyle=bg;c.fillRect(0,0,S,S);
-  for(const[x,y,r]of[[-.25,-.3,.38],[.15,-.35,.3],[.28,.05,.32],[-.05,.1,.26],[-.35,.25,.2],[.1,.42,.18],[-.15,-.05,.22]]){const gx=C+x*MR,gy=C+y*MR,rr=r*MR,mg=c.createRadialGradient(gx,gy,0,gx,gy,rr);mg.addColorStop(0,"rgba(120,116,104,.5)");mg.addColorStop(.7,"rgba(130,126,114,.3)");mg.addColorStop(1,"rgba(140,135,122,0)");c.fillStyle=mg;c.beginPath();c.arc(gx,gy,rr,0,7);c.fill();}
-  for(let i=0;i<70;i++){const a=Math.random()*7,d=Math.sqrt(Math.random())*MR*.93,x=C+Math.cos(a)*d,y=C+Math.sin(a)*d,r=Math.max(.5,MR*.06*Math.pow(Math.random(),2.2));const cg=c.createRadialGradient(x+r*.25,y+r*.25,0,x,y,r);cg.addColorStop(0,"rgba(90,86,76,.22)");cg.addColorStop(.8,"rgba(110,105,95,.12)");cg.addColorStop(1,"rgba(255,252,240,.18)");c.fillStyle=cg;c.beginPath();c.arc(x,y,r,0,7);c.fill();}
-  const tx=C+MR*.05,ty=C+MR*.62;c.strokeStyle="rgba(255,253,245,.10)";c.lineWidth=MR*.02;for(let k=0;k<14;k++){const a=Math.random()*7,l=rnd(.25,.8)*MR;c.beginPath();c.moveTo(tx,ty);c.lineTo(tx+Math.cos(a)*l,ty+Math.sin(a)*l);c.stroke();}
-  c.fillStyle="rgba(255,253,245,.55)";c.beginPath();c.arc(tx,ty,MR*.035,0,7);c.fill();
-  const img=c.getImageData(0,0,m.width,m.height),dd=img.data;for(let i=0;i<dd.length;i+=4){if(dd[i+3]){const n=(Math.random()-.5)*10;dd[i]+=n;dd[i+1]+=n;dd[i+2]+=n}}c.putImageData(img,0,0);
-  const sh=document.createElement("canvas");sh.width=m.width;sh.height=m.height;const s2=sh.getContext("2d");s2.scale(dpr,dpr);
-  s2.fillStyle="rgba(3,6,18,.9)";s2.beginPath();s2.arc(C,C,MR+2,Math.PI/2,Math.PI*1.5);s2.closePath();s2.fill();
-  s2.globalCompositeOperation="destination-out";s2.beginPath();s2.ellipse(C,C,MR*.42,MR+2,0,0,7);s2.fill();
-  c.globalCompositeOperation="source-atop";c.filter=`blur(${Math.max(1.2,MR*.05)}px)`;c.drawImage(sh,0,0,S,S);c.filter="none";
-  const limb=c.createRadialGradient(C+MR*.15,C,MR*.7,C,C,MR);limb.addColorStop(0,"rgba(0,0,0,0)");limb.addColorStop(1,"rgba(30,30,40,.4)");c.fillStyle=limb;c.fillRect(0,0,S,S);
-  c.restore();return m;
+function makeMoon(MR,dpr){ // waxing gibbous, lit per pixel like a sphere; maria, fine crater texture and a bright ray crater
+  const S=Math.ceil(MR*2+4),P=Math.round(S*dpr),m=document.createElement("canvas");m.width=m.height=P;const c=m.getContext("2d"),im=c.createImageData(P,P),D=im.data,C=P/2,R=MR*dpr;
+  let sd=20261028;const rand=()=>{sd=sd+0x6D2B79F5|0;let t=Math.imul(sd^sd>>>15,1|sd);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const G=128,grid=new Float32Array(G*G);for(let k=0;k<G*G;k++)grid[k]=rand();
+  const vn=(x,y)=>{x=(x%G+G)%G;y=(y%G+G)%G;const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf),x1=(xi+1)%G,y1=(yi+1)%G,a=grid[yi*G+xi],b=grid[yi*G+x1],cc=grid[y1*G+xi],d=grid[y1*G+x1];return a+(b-a)*u+(cc-a)*v+(a-b-cc+d)*u*v};
+  const fbm=(x,y,o)=>{let t=0,a=.5,f=1;for(let k=0;k<o;k++){t+=a*vn(x*f,y*f);f*=2.03;a*=.5}return t};
+  const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
+  const MARIA=[[-.32,-.38,.36],[.12,-.40,.22],[.32,-.10,.26],[.66,-.22,.14],[-.60,.05,.40],[-.22,.32,.26],[.28,.30,.16]];
+  const CR=[];for(let k=0;k<46;k++){const a=rand()*6.283,d=Math.sqrt(rand())*.92,r=.016+Math.pow(rand(),3)*.08;CR.push([Math.cos(a)*d,Math.sin(a)*d,r])}CR.push([-.05,.62,.05]);
+  const th=1.0,Lx=Math.sin(th),Lz=Math.cos(th);
+  for(let y=0;y<P;y++)for(let x=0;x<P;x++){const dx=(x+.5-C)/R,dy=(y+.5-C)/R,r2=dx*dx+dy*dy,k=(y*P+x)*4;if(r2>1+2/R){D[k+3]=0;continue}
+    const edge=Math.min(1,Math.max(0,(1-Math.sqrt(r2))*R+.5)),nz=Math.sqrt(Math.max(0,1-r2)),ndl=dx*Lx+nz*Lz;
+    let bias=0;for(const[mx,my,mr]of MARIA){bias+=Math.exp(-((dx-mx)**2+(dy-my)**2)/(mr*mr)*1.3)}
+    const mar=sm(.5,.68,fbm(dx*2.6+4.1,dy*2.6+1.7,5)*.9+Math.min(1,bias)*.42-.12);
+    let alb=.78-.24*mar+.12*(fbm(dx*12+3,dy*12+9,4)-.5)+.08*(fbm(dx*36+5,dy*36+1,3)-.5);
+    for(const[cx,cy,cr]of CR){const ox=dx-cx,oy=dy-cy,q=Math.hypot(ox,oy)/cr;if(q<1.25){const sh=ox/cr*Math.min(1,q);if(q<1){alb+=(-.12*sh-.025)*(1-mar*.5)}else{alb+=.05*(1.25-q)*4}}}
+    const tx=dx+.05,ty=dy-.62,td=Math.hypot(tx,ty);alb+=.06*Math.exp(-td*5)*(.6+.4*Math.sin(Math.atan2(ty,tx)*11));
+    const lit=sm(-.03,.16,ndl)*(.82+.18*Math.sqrt(Math.max(0,ndl))),val=Math.max(alb*lit,alb*.05),al=edge*Math.min(1,lit*1.25+.14);
+    D[k]=Math.min(255,val*262);D[k+1]=Math.min(255,val*255);D[k+2]=Math.min(255,val*240);D[k+3]=al*255;}
+  c.putImageData(im,0,0);return m;
 }
 function makeHorizon(w,h,dpr){ // dark land: rolling ground, bushes and a few palm trees
   const cv=document.createElement("canvas");cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext("2d");c.scale(dpr,dpr);c.fillStyle="#010208";c.strokeStyle="#010208";
@@ -520,7 +558,21 @@ function go(n){
     hooks[n]?.enter?.();const f=to.querySelector("h1,h2");if(f){f.tabIndex=-1;f.focus({preventScroll:true})}busy=false;},reduce?0:480);
 }
 scenes[0].classList.add("enter");
-$("#lookUp").onclick=()=>{AUDIO.init();SKY.clear();setTimeout(()=>go(1),reduce?0:900)};
+const TEST=!!CONFIG.testKey&&location.hash==="#test-"+CONFIG.testKey;
+const KEY=k=>"tsky:"+CONFIG.slug+":"+k,store={get(k){try{return localStorage.getItem(KEY(k))}catch(e){return null}},set(k,v){if(TEST)return;try{localStorage.setItem(KEY(k),v)}catch(e){}}};
+if(TEST)$("#testbar").hidden=false;
+const norm=t=>t.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const needGate=()=>CONFIG.secret&&CONFIG.secret.h&&CONFIG.secret.h.length&&store.get("unlock")!=="1";
+function enter(){AUDIO.init();SKY.clear();setTimeout(()=>go(1),reduce?0:900)}
+$("#lookUp").onclick=()=>{AUDIO.init();if(!needGate())return enter();
+  const cov=scenes[0].querySelector(".inner");cov.hidden=true;const g=$("#gate");$("#gq").textContent=CONFIG.secret.q;$("#gh").textContent=CONFIG.secret.hint||"";$("#gskip").hidden=!TEST;g.hidden=false;
+  scenes[0].classList.remove("enter");void scenes[0].offsetWidth;scenes[0].classList.add("enter");setTimeout(()=>$("#ga").focus(),400);};
+$("#gate").addEventListener("submit",async e=>{e.preventDefault();const v=norm($("#ga").value);if(!v)return;let ok=false;
+  try{ok=CONFIG.secret.h.includes(await sha(CONFIG.slug+":"+v))}catch(err){ok=false}
+  if(ok){store.set("unlock","1");$("#ge").hidden=true;enter();}
+  else{const g=$("#gate");$("#ge").hidden=false;g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake");$("#ga").select();}});
+$("#gskip").onclick=enter;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-next]");if(b){go(cur+1);return}
   if(cur>0&&!e.target.closest("button,a,.panel,.pol,.wheel,.cardimg,.lb")){SKY.meteor(e.clientX-80,e.clientY-50,true);if(cur===1)toast(["wish sent to the stars","the sky heard you","wish received","another wish, granted"][Math.floor(Math.random()*4)])}});
 $("#back").onclick=()=>go(cur-1);$("#replay").onclick=()=>go(1);
@@ -533,7 +585,7 @@ function buildBday(){let c=0;const sp=(txt,cls)=>`<span class="${cls||""}">`+txt
 /* 2 · numbers */
 $("#bornText").textContent=born.toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"});
 $("#sDay").textContent=born.toLocaleDateString(undefined,{weekday:"long"});
-const big=v=>v>=1e9?(v/1e9).toFixed(2)+" billion":Math.floor(v).toLocaleString();
+const big=v=>v>=1e9?(v/1e9).toFixed(2)+" billion":v>=1e6?(v/1e6).toFixed(2)+" million":Math.floor(v).toLocaleString();
 const vals=()=>{const ms=Date.now()-born,min=ms/6e4,days=ms/864e5;return{days,hours:ms/36e5,beats:min*80,km:days*2.57e6,laughs:days*17}};
 let liveT;function countUp(){$("#age").textContent=ageNow();clearInterval(liveT);const t0=performance.now(),dur=reduce?1:2200;
   (function f(now){const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,4),v=vals();for(const el of $$("[data-k]"))el.textContent=big(v[el.dataset.k]*e);
@@ -618,9 +670,10 @@ let WON=null;
     ctx.beginPath();ctx.arc(r,r,r*.14,0,7);const hub=ctx.createRadialGradient(r-4,r-4,1,r,r,r*.14);hub.addColorStop(0,"#2A2F55");hub.addColorStop(1,"#01030B");ctx.fillStyle=hub;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle="#FFD27A";ctx.stroke();}
   new MutationObserver(()=>{if(!sec.hidden&&!loop)requestAnimationFrame(draw)}).observe(sec,{attributes:true,attributeFilter:["hidden"]});
   function spin(){if(spinning)return;spinning=true;const btn=$("#spinBtn");btn.disabled=true;btn.textContent="Spinning…";$("#prize").hidden=true;$("#toCard").hidden=true;$("#again").hidden=true;
-    const win=Math.floor(Math.random()*n),jit=(Math.random()-.5)*a*.6,start=rot%(2*Math.PI),target=2*Math.PI*(6+Math.floor(Math.random()*2))-(win+.5)*a+jit,dur=reduce?1:5600,t0=performance.now(),ease=x=>1-Math.pow(1-x,4);
+    const saved=store.get("prize"),win=CONFIG.prizeIndex!=null?CONFIG.prizeIndex%n:saved!=null?+saved:Math.floor(Math.random()*n),jit=(Math.random()-.5)*a*.6,start=rot%(2*Math.PI),target=2*Math.PI*(6+Math.floor(Math.random()*2))-(win+.5)*a+jit,dur=reduce?1:5600,t0=performance.now(),ease=x=>1-Math.pow(1-x,4);
     (function step(now){const k=Math.min(1,(now-t0)/dur);rot=start+(target-start)*ease(k);const seg=Math.floor(rot/a);if(seg!==lastSeg){lastSeg=seg;AUDIO.tick();const p=$("#pin");p.classList.remove("tick");void p.offsetWidth;p.classList.add("tick")}
-      if(k<1)requestAnimationFrame(step);else{spinning=false;WON=P[win];$("#prizeText").textContent=WON;$("#prize").hidden=false;btn.hidden=true;$("#toCard").hidden=false;$("#again").hidden=!CONFIG.previewMode;AUDIO.chime();confetti();SKY.shower(5);}})(t0);}
+      if(k<1)requestAnimationFrame(step);else{spinning=false;WON=P[win];store.set("prize",String(win));$("#prizeText").textContent=WON;$("#prize").hidden=false;btn.hidden=true;$("#toCard").hidden=false;$("#again").hidden=!TEST;AUDIO.chime();confetti();SKY.shower(5);}})(t0);}
+  const had=store.get("prize");if(had!=null&&!TEST){const i=+had%n;rot=-(i+.5)*a;WON=P[i];$("#prizeLead").textContent="you already spun, and you won";$("#prizeText").textContent=WON;$("#prize").hidden=false;$("#spinBtn").hidden=true;$("#toCard").hidden=false;}
   $("#spinBtn").onclick=spin;$("#again").onclick=()=>{$("#spinBtn").hidden=false;$("#spinBtn").disabled=false;spin()};
   $("#toCard").onclick=()=>go(6);
 })();
