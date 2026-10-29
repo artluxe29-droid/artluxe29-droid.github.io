@@ -20,6 +20,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.cd-on .cover>.inner:not(#cd){display:none!important}.cd-on #cd[hidden]{display:grid!important}
 html{background:var(--deep)}
 body{margin:0;background:var(--deep);color:var(--ink);font:500 16px/1.6 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 h1,h2,h3,p{margin:0}
@@ -612,11 +613,11 @@ $("#gate").addEventListener("submit",async e=>{e.preventDefault();const v=norm($
   else{const g=$("#gate");$("#ge").hidden=false;g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake");$("#ga").select();}});
 $("#gskip").onclick=enter;
 // countdown: until the birthday arrives, the cover shows a clock instead (test link skips it; add -countdown to preview it)
-(function(){const at=CD_PREVIEW?Date.now()+12000:CONFIG.unlockAt?Date.parse(CONFIG.unlockAt):0;if(!at||(TEST&&!CD_PREVIEW)||Date.now()>=at)return;
+(function(){const at=CD_PREVIEW?Date.now()+12000:CONFIG.unlockAt?Date.parse(CONFIG.unlockAt):0;const H=document.documentElement;if(!at||(TEST&&!CD_PREVIEW)||Date.now()>=at){H.classList.remove("cd-on");return}H.classList.add("cd-on");
   const cov=scenes[0].querySelector(".inner"),cd=$("#cd");cov.hidden=true;cd.hidden=false;
   $("#cdWhen").textContent=CD_PREVIEW?"Preview: this clock is set to 12 seconds.":"Clear skies expected "+new Date(at).toLocaleString(undefined,{day:"numeric",month:"long",hour:"numeric",minute:"2-digit",timeZone:CONFIG.tz||undefined})+".";
   const p2=n=>String(n).padStart(2,"0");let t;
-  function tick(){const ms=at-Date.now();if(ms<=0){clearInterval(t);cd.hidden=true;cov.hidden=false;scenes[0].classList.remove("enter");void scenes[0].offsetWidth;scenes[0].classList.add("enter");SKY.shower&&SKY.shower(6);return}
+  function tick(){const ms=at-Date.now();if(ms<=0){clearInterval(t);H.classList.remove("cd-on");cd.hidden=true;cov.hidden=false;scenes[0].classList.remove("enter");void scenes[0].offsetWidth;scenes[0].classList.add("enter");SKY.shower&&SKY.shower(6);return}
     const s=Math.floor(ms/1000);$("#cdD").textContent=Math.floor(s/86400);$("#cdH").textContent=p2(Math.floor(s%86400/3600));$("#cdM").textContent=p2(Math.floor(s%3600/60));$("#cdS").textContent=p2(s%60);}
   tick();t=setInterval(tick,1000);})();
 document.addEventListener("click",e=>{const b=e.target.closest("[data-next]");if(b){go(cur+1);return}
