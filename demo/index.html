@@ -84,7 +84,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .age{font:800 clamp(64px,16vw,120px)/1 var(--head);letter-spacing:-.05em;color:var(--gold)}
 
 /* photos */
-.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:20px 14px;width:100%}
+.wall{display:flex;flex-wrap:wrap;justify-content:center;gap:20px 14px;width:100%}.wall>.pol{flex:0 1 calc(50% - 7px);max-width:210px}@media (min-width:760px){.wall>.pol{flex-basis:calc(25% - 11px)}}
 .pol{background:#FBFAF6;color:#2B2440;border:0;padding:8px 8px 0;border-radius:4px;box-shadow:0 16px 34px rgba(0,0,0,.55);transform:rotate(var(--r));transition:transform .3s ease}
 .scene.enter .pol{animation:drop .9s cubic-bezier(.2,.9,.3,1.25) both;animation-delay:calc(var(--k) * 120ms + .5s)}
 .pol:hover{transform:rotate(0) scale(1.05)}
@@ -93,7 +93,14 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 @keyframes drop{0%{opacity:0;transform:translateY(-60px) rotate(calc(var(--r) * -3)) scale(1.1)}60%{opacity:1}}
 .lb{position:fixed;inset:0;z-index:40;background:rgba(1,3,11,.86);backdrop-filter:blur(6px);display:grid;place-items:center;padding:24px}
 .lb .pol{width:min(380px,86vw);transform:rotate(-1.5deg);animation:pop .4s cubic-bezier(.2,.9,.3,1.3)}
-.lb .pol .cap{font-size:26px}
+.lb .pol .cap{font-size:20px}
+.lb .pol img{aspect-ratio:auto;max-height:66vh;object-fit:contain;object-position:50% 50%!important;background:#FBFAF6}
+.wallhead{flex:1 0 100%;display:flex;align-items:center;gap:12px;margin:14px 0 -4px;font:700 clamp(17px,3.8vw,21px)/1.2 var(--head);color:var(--pink)}
+.wallhead::after{content:"";flex:1;height:1px;background:var(--line)}
+.pol{position:relative}
+.pol.then{background:#F3EBDD}
+.pol.then img{filter:sepia(.28) saturate(.85) contrast(.96) brightness(1.03)}
+.pol.then::before{content:"";position:absolute;top:-9px;left:50%;width:58px;height:20px;margin-left:-29px;background:rgba(255,236,190,.72);box-shadow:0 1px 3px rgba(0,0,0,.25);transform:rotate(-4deg);z-index:1}
 @keyframes pop{from{opacity:0;transform:scale(.8) rotate(-6deg)}}
 .lb .x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px))}
 
@@ -633,9 +640,11 @@ const SCENES=(function(){
 })();
 const PHOTO_SRCS=[];
 (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{
-  PHOTO_SRCS.length=0;PHOTO_SRCS.push(...CONFIG.photos.map(p=>p.src||SCENES(p.scene)));const srcs=PHOTO_SRCS,card=(p,i)=>`<img src="${srcs[i]}" alt="${p.cap}"><span class="cap">${p.cap}</span>`;
-  $("#wall").innerHTML=CONFIG.photos.map((p,i)=>`<button class="pol" type="button" data-i="${i}" style="--r:${((i*37)%9-4)}deg;--k:${i}" aria-label="Open photo: ${p.cap}">${card(p,i)}</button>`).join("");
-  $("#wall").addEventListener("click",e=>{const b=e.target.closest(".pol");if(!b)return;const i=+b.dataset.i;$("#lbIn").innerHTML=`<div class="pol">${card(CONFIG.photos[i],i)}</div>`;$("#lb").hidden=false;$("#lbX").focus();});
+  PHOTO_SRCS.length=0;PHOTO_SRCS.push(...CONFIG.photos.map(p=>p.src||SCENES(p.scene)));const srcs=PHOTO_SRCS,card=(p,i)=>`<img src="${srcs[i]}" alt="${p.cap}"${p.fy!=null?` style="object-position:50% ${p.fy*100}%"`:""} decoding="async"><span class="cap">${p.cap}</span>`;
+  const GT=CONFIG.photoGroups||[];let lastG=null,k0=0;
+  $("#wall").innerHTML=CONFIG.photos.map((p,i)=>{let h="";if(p.g!=null&&p.g!==lastG){lastG=p.g;k0=i;if(GT[p.g])h=`<div class="wallhead">${GT[p.g]}</div>`;}
+    return h+`<button class="pol${p.then?" then":""}" type="button" data-i="${i}" style="--r:${((i*37)%9-4)}deg;--k:${i-k0}" aria-label="Open photo: ${p.cap}">${card(p,i)}</button>`}).join("");
+  $("#wall").addEventListener("click",e=>{const b=e.target.closest(".pol");if(!b)return;const i=+b.dataset.i;$("#lbIn").innerHTML=`<div class="pol${CONFIG.photos[i].then?" then":""}">${card(CONFIG.photos[i],i)}</div>`;$("#lb").hidden=false;$("#lbX").focus();});
 });
 const closeLb=()=>{$("#lb").hidden=true};$("#lbX").onclick=closeLb;$("#lb").addEventListener("click",e=>{if(e.target.id==="lb")closeLb()});addEventListener("keydown",e=>{if(e.key==="Escape")closeLb()});
 
@@ -727,9 +736,9 @@ const CARDS={
     footer(x,W,H,o);grainOver(x,W,H);return toBlob(c);},
   async photos(o){const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");backdrop(x,W,H);x.textAlign="center";
     x.fillStyle="#FFD27A";x.font='600 48px "Shantell Sans", sans-serif';x.fillText(CONFIG.photoEyebrow||"some favourite moments",W/2,520,W-120);x.fillStyle="#EEF2FF";x.font="800 84px 'Shantell Sans', sans-serif";x.fillText(CONFIG.photoCardTitle||"Snapshots",W/2,620,W-120);
-    const imgs=await Promise.all(PHOTO_SRCS.map(loadImg)),slots=[[2,650],[3,1010],[3,1365]];let k=0;
+    const PICK=(CONFIG.sheetPick||CONFIG.photos.map((_,i)=>i)).slice(0,8),imgs=await Promise.all(PICK.map(i=>loadImg(PHOTO_SRCS[i]))),slots=[[2,650],[3,1010],[3,1365]];let k=0;
     for(const[n,y]of slots){const pw=n===2?300:280;for(let i=0;i<n&&k<imgs.length;i++,k++){const cx=W/2+(i-(n-1)/2)*(pw+30),rot=((k*37)%9-4)*Math.PI/180;x.save();x.translate(cx,y+pw*.6);x.rotate(rot);x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=30;x.shadowOffsetY=14;x.fillStyle="#FBFAF6";x.fillRect(-pw/2,-pw*.6,pw,pw*1.18);x.shadowColor="transparent";
-      const ip=pw-28;if(imgs[k]){const im=imgs[k],s=Math.min(im.width,im.height);x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,-ip/2,-pw*.6+14,ip,ip);}x.fillStyle="#2B2440";x.font=`600 ${Math.round(pw/12.5)}px "Shantell Sans", sans-serif`;x.fillText(CONFIG.photos[k].cap,0,-pw*.6+ip+14+pw*.14,pw-20);x.restore();}}
+      const ip=pw-28;if(imgs[k]){const im=imgs[k],P=CONFIG.photos[PICK[k]],s=Math.min(im.width,im.height),fy=P.fy!=null?P.fy:.5;x.drawImage(im,(im.width-s)/2,(im.height-s)*fy,s,s,-ip/2,-pw*.6+14,ip,ip);}x.fillStyle="#2B2440";x.font=`600 ${Math.round(pw/12.5)}px "Shantell Sans", sans-serif`;x.fillText(CONFIG.photos[PICK[k]].cap,0,-pw*.6+ip+14+pw*.14,pw-20);x.restore();}}
     footer(x,W,H,o);grainOver(x,W,H);return toBlob(c);},
   async playlist(o){const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");backdrop(x,W,H);x.textAlign="center";
     x.fillStyle="#FFD27A";x.font='600 48px "Shantell Sans", sans-serif';x.fillText("put this on",W/2,500);x.fillStyle="#EEF2FF";x.font="800 80px 'Shantell Sans', sans-serif";x.fillText("My birthday playlist",W/2,600,W-120);
