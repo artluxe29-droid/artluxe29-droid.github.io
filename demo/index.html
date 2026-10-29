@@ -129,7 +129,8 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .tr .t{min-width:0}.tr b{display:block;font-weight:700;line-height:1.3}
 .tr small{display:block;font:500 13.5px/1.3 var(--script);color:var(--pink);margin-top:2px}
 .tr .d{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
-.tr .d.sp{color:#1ED760;display:grid;place-items:center}.tnote{margin:4px 0 0;color:var(--muted);font-size:13px;text-align:center}
+.tr .d.sp{color:#1ED760;display:grid;place-items:center}
+.ytbox{grid-column:1/-1;position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000;box-shadow:0 14px 34px rgba(0,0,0,.5)}.ytbox iframe,#ytp{position:absolute;inset:0;width:100%;height:100%;border:0}.ytfail{position:absolute;inset:0;display:grid;place-content:center;gap:12px;text-align:center;padding:16px;background:rgba(5,12,34,.92)}.ytfail p{margin:0;color:var(--muted)}.tr .d.yt{color:var(--muted);font-size:12px}.tnote{margin:4px 0 0;color:var(--muted);font-size:13px;text-align:center}
 
 /* wheel */
 .wheel{position:relative;width:min(360px,84vw);aspect-ratio:1;max-width:100%}
@@ -256,7 +257,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 <section class="scene" data-s="4" hidden><div class="inner">
   <span class="script r" style="--i:0">put this on</span>
   <h2 class="r" style="--i:1">Your birthday playlist</h2>
-  <div class="panel r" style="--i:2"><div class="music">
+  <div class="panel r" style="--i:2"><div class="music"><div class="ytbox" id="ytbox" hidden><div id="ytp"></div><div class="ytfail" id="ytfail" hidden><p>This one won't play inside the page.</p><a class="ghost next" id="ytopen" target="_blank" rel="noopener">Play it on YouTube</a></div></div>
     <div class="deck"><div class="record"><div class="disc" id="disc"></div><div class="label"><small id="nowLabel">pick a song</small></div></div><div class="arm" id="arm" aria-hidden="true"></div><div class="bar"><i id="prog"></i></div></div>
     <ul class="tracks" id="tracks"></ul><p class="tnote" id="tnote" hidden></p>
   </div></div>
@@ -654,16 +655,32 @@ const MUSIC=(function(){
   const fmt=sec=>`${Math.floor(sec/60)}:${String(Math.round(sec%60)).padStart(2,"0")}`;
   const play='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',pause='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
   const spi='<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.6 14.4a.62.62 0 0 1-.86.2c-2.35-1.43-5.3-1.76-8.79-.96a.62.62 0 1 1-.28-1.21c3.8-.87 7.07-.5 9.72 1.11.3.18.39.57.21.86zm1.22-2.73a.78.78 0 0 1-1.07.26c-2.69-1.65-6.79-2.13-9.97-1.16a.78.78 0 1 1-.45-1.49c3.63-1.1 8.15-.57 11.24 1.33.37.22.48.7.25 1.06zm.1-2.84C14.7 8.92 9.37 8.75 6.29 9.68a.94.94 0 1 1-.54-1.8c3.53-1.07 9.42-.86 13.13 1.34a.94.94 0 0 1-.96 1.61z"/></svg>';
-  const LINKS=CONFIG.songs.some(s=>s.sp);if(LINKS){const t=$("#tnote");t.textContent="Tap a song to play it on Spotify";t.hidden=false;lab.textContent="tap a song";}
-  ul.innerHTML=CONFIG.songs.map((s,i)=>`<li><button class="tr" type="button" aria-pressed="false" data-i="${i}"${s.sp?` aria-label="${s.t} by ${s.a}, opens Spotify"`:""}><span class="pl">${play}</span><span class="t"><b>${s.t}</b><small>${s.sp?s.a:s.n}</small></span>${s.sp?`<span class="d sp">${spi}</span>`:`<span class="d">${fmt(AUDIO.beats(s)*60/s.bpm+1)}</span>`}</button></li>`).join("");
+  const LINKS=CONFIG.songs.some(s=>s.sp||s.yt);if(LINKS){const t=$("#tnote");t.textContent=CONFIG.songs.some(s=>s.yt)?"Tap a song to play it right here":"Tap a song to play it on Spotify";t.hidden=false;lab.textContent="tap a song";}
+  ul.innerHTML=CONFIG.songs.map((s,i)=>`<li><button class="tr" type="button" aria-pressed="false" data-i="${i}"${s.sp&&!s.yt?` aria-label="${s.t} by ${s.a}, opens Spotify"`:""}><span class="pl">${play}</span><span class="t"><b>${s.t}</b><small>${s.a||s.n}</small></span>${s.yt?`<span class="d yt">${s.len||""}</span>`:s.sp?`<span class="d sp">${spi}</span>`:`<span class="d">${fmt(AUDIO.beats(s)*60/s.bpm+1)}</span>`}</button></li>`).join("");
+  // songs with a YouTube id play inside the page; the birthday tune steps aside while they play
+  let yt=null,ytReady=null,ytCur=-1;const box=$("#ytbox"),fail=$("#ytfail");
+  const mark=(i,on)=>{ul.querySelectorAll(".tr").forEach(b=>{const me=+b.dataset.i===i&&on;b.setAttribute("aria-pressed",me?"true":"false");b.querySelector(".pl").innerHTML=me?pause:play});disc.classList.toggle("on",on);arm.classList.toggle("on",on);};
+  const loadYT=()=>ytReady||(ytReady=new Promise(res=>{const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{prev&&prev();res()};const sc=document.createElement("script");sc.src="https://www.youtube.com/iframe_api";sc.onerror=()=>res("x");document.head.appendChild(sc);}));
+  function ytFail(){const s=CONFIG.songs[ytCur];fail.hidden=false;$("#ytopen").href="https://www.youtube.com/watch?v="+s.yt;mark(ytCur,false);AUDIO.duck(false);}
+  async function ytPlay(i){const s=CONFIG.songs[i];stop();ytCur=i;box.hidden=false;fail.hidden=true;lab.textContent=s.t;mark(i,true);AUDIO.duck(true);
+    box.scrollIntoView({behavior:"smooth",block:"nearest"});
+    const r=await loadYT();if(r==="x"||!window.YT){ytFail();return;}
+    if(yt){yt.loadVideoById(s.yt);return;}
+    yt=new YT.Player("ytp",{videoId:s.yt,host:"https://www.youtube-nocookie.com",playerVars:{autoplay:1,playsinline:1,rel:0,modestbranding:1},
+      events:{onReady:e=>e.target.playVideo(),onError:ytFail,
+        onStateChange:e=>{if(e.data===1){fail.hidden=true;mark(ytCur,true);AUDIO.duck(true);}else if(e.data===2||e.data===0){mark(ytCur,false);AUDIO.duck(false);}}}});}
+  function ytStop(){if(yt&&yt.pauseVideo)try{yt.pauseVideo()}catch(e){}if(ytCur>=0){mark(ytCur,false);AUDIO.duck(false);}}
   let cur=null,raf;
   function stop(){if(cur){cur.h.stop();cur=null;AUDIO.duck(false)}cancelAnimationFrame(raf);disc.classList.remove("on");arm.classList.remove("on");lab.textContent=LINKS?"tap a song":"pick a song";prog.style.width="0";ul.querySelectorAll(".tr").forEach(b=>{b.setAttribute("aria-pressed","false");b.querySelector(".pl").innerHTML=play});}
   ul.addEventListener("click",e=>{const b=e.target.closest(".tr");if(!b)return;const i=+b.dataset.i,was=cur&&cur.i===i;
-    if(CONFIG.songs[i].sp){window.open(CONFIG.songs[i].sp,"_blank","noopener");disc.classList.add("on");arm.classList.add("on");lab.textContent=CONFIG.songs[i].t;return;}
+    const S=CONFIG.songs[i];
+    if(S.yt){if(ytCur===i&&yt&&yt.getPlayerState){const st=yt.getPlayerState();if(st===1){yt.pauseVideo();return}if(st===2||st===5||st===0){yt.playVideo();return}}ytPlay(i);return;}
+    if(S.sp){window.open(S.sp,"_blank","noopener");disc.classList.add("on");arm.classList.add("on");lab.textContent=S.t;return;}
+    ytStop();
     stop();if(was)return;
     AUDIO.duck(true);const s=CONFIG.songs[i],h=AUDIO.playSong(s);cur={i,h};b.setAttribute("aria-pressed","true");b.querySelector(".pl").innerHTML=pause;disc.classList.add("on");arm.classList.add("on");lab.textContent=s.t;
     (function tick(){if(!cur)return;const k=Math.min(1,(h.now()-h.t0)/h.total);prog.style.width=(k*100)+"%";if(k>=1){stop();return}raf=requestAnimationFrame(tick)})();});
-  return{stop};
+  return{stop:()=>{stop();ytStop()}};
 })();
 
 /* 5 · wheel */
@@ -749,7 +766,7 @@ const CARDS={
     x.fillStyle="#3A1430";x.font='600 17px "Shantell Sans", sans-serif';x.fillText(CONFIG.name+"'s mix",cx,cy+R*.2,R*.56);
     x.textAlign="left";const y0=BIG?1040:1150,st=BIG?Math.min(118,Math.floor((1790-y0)/NS)):118,rh=st-14,k=rh/100;
     CONFIG.songs.forEach((s,i)=>{const y=y0+i*st;x.fillStyle="rgba(255,255,255,.05)";rr(x,110,y-62*k,W-220,rh,22);x.fill();x.fillStyle="#9FAACF";x.font=`700 ${Math.round(34*Math.max(k,.8))}px 'Shantell Sans', sans-serif`;x.fillText(String(i+1),145,y);
-      x.fillStyle="#EEF2FF";fitFont(x,s.t,W-360,Math.round(40*Math.max(k,.8)),z=>`700 ${z}px "Shantell Sans", sans-serif`);x.fillText(s.t,210,y-8*k);x.fillStyle="#FF9CC8";x.font=`600 ${Math.round(24*Math.max(k,.85))}px "Shantell Sans", sans-serif`;x.fillText(s.sp?s.a:s.n,210,y+28*k,W-360);});
+      x.fillStyle="#EEF2FF";fitFont(x,s.t,W-360,Math.round(40*Math.max(k,.8)),z=>`700 ${z}px "Shantell Sans", sans-serif`);x.fillText(s.t,210,y-8*k);x.fillStyle="#FF9CC8";x.font=`600 ${Math.round(24*Math.max(k,.85))}px "Shantell Sans", sans-serif`;x.fillText(s.a||s.n,210,y+28*k,W-360);});
     footer(x,W,H,o);grainOver(x,W,H);return toBlob(c);}
 };
 
