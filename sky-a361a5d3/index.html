@@ -212,6 +212,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .vplayer{display:flex;align-items:center;gap:14px;width:min(560px,100%);padding:12px 16px;border-radius:18px;background:var(--glass);border:1px solid var(--line);text-align:left}
 .vpp{flex:0 0 46px;height:46px;border-radius:50%;border:0;background:var(--gold);color:#241A05;display:grid;place-items:center;cursor:pointer}
 .vinfo{flex:1;min-width:0;display:grid;gap:4px}.vinfo b{font:700 16px var(--head)}.vinfo span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vopen{font-size:12px;color:var(--pink);text-decoration:underline;margin-top:2px}.vopen.warn{font-size:13px;font-weight:600;color:var(--gold)}
 .vbar{height:4px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.vbar i{display:block;height:100%;width:0;background:var(--gold)}
 .verse{max-width:34ch;margin:4px auto 0;padding:14px 18px;border-radius:16px;background:var(--glass);border:1px solid var(--line);font:500 clamp(15px,3.6vw,18px)/1.55 var(--head);color:var(--ink)}
 .verse cite{display:block;margin-top:6px;font:600 13px var(--body);font-style:normal;color:var(--pink);letter-spacing:.04em}
@@ -322,7 +323,7 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <h2 class="r" style="--i:1">Messages in the stars</h2>
   <p class="lead r" style="--i:2">Each star is holding a voice. Tap one to listen.</p>
   <div class="vsky r" style="--i:3" id="vsky"><svg class="vlines" id="vlines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
-  <div class="vplayer r" style="--i:4" id="vplayer" hidden><button class="vpp" id="vpp" type="button" aria-label="Pause"></button><div class="vinfo"><b id="vname"></b><span id="vtime"></span><div class="vbar"><i id="vprog"></i></div></div></div>
+  <div class="vplayer r" style="--i:4" id="vplayer" hidden><button class="vpp" id="vpp" type="button" aria-label="Pause"></button><div class="vinfo"><b id="vname"></b><span id="vtime"></span><div class="vbar"><i id="vprog"></i></div><a class="vopen" id="vopen" target="_blank" rel="noopener">Not playing? Tap here to open it</a></div></div>
   <button class="save r" style="--i:5" id="vall" type="button">Play them all, one after another</button>
   <button class="next r" style="--i:6" data-next type="button">Keep going <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
   <audio id="vaudio" preload="none" playsinline></audio>
@@ -396,7 +397,7 @@ const CONFIG = {
 };
 // ======================================================================
 Object.assign(CONFIG,{
- "voices":[{"n":"Daddy","src":"v/0.m4a","len":"0:46"},{"n":"Mummy","src":"v/1.m4a","len":"2:04"},{"n":"Grace","src":"v/2.m4a","len":"0:43"},{"n":"Eri","src":"v/3.m4a","len":"0:43"},{"n":"Moses","src":"v/4.m4a","len":"0:44"}],
+ "voices":[{"n":"Daddy","src":"v/0.mp3","len":"0:46"},{"n":"Mummy","src":"v/1.mp3","len":"2:04"},{"n":"Grace","src":"v/2.mp3","len":"0:43"},{"n":"Eri","src":"v/3.mp3","len":"0:43"},{"n":"Moses","src":"v/4.mp3","len":"0:44"}],
  "slug": "sky-a361a5d3",
  "testKey": "5a8b6522",
  "name": "Preshy",
@@ -406,7 +407,7 @@ Object.assign(CONFIG,{
  "unlockAt": "2026-11-05T00:00:00+01:00",
  "tz": "Africa/Lagos",
  "wish": "Preshy, nineteen looks so good on you! You make every room warmer and every day a little brighter, and we thank God for the gift of you. This year, may His favour go ahead of you, may your joy stay loud, and may every quiet prayer in your heart be answered. Keep shining, keep singing, keep being you. Happy birthday, God's favourite baby!",
- "from": "with love, your dear sister & Collins",
+ "from": "with love, Grace & Collins",
  "ageLine": "years of being Preshy",
  "photoEyebrow": "look how far you've come",
  "photoTitle": "Snapshots of Preshy",
@@ -964,9 +965,13 @@ const VOICES=(function(){const L=CONFIG.voices||[];const sky=$("#vsky"),au=$("#v
   sky.insertAdjacentHTML("beforeend",L.slice(0,n).map((v,i)=>`<button class="vstar" type="button" data-i="${i}" style="left:${P[i][0]}%;top:${P[i][1]}%;--k:${i}" aria-label="Voice note from ${v.n}"><span class="orb"></span><b>${v.n}</b><small>${v.len||"tap to listen"}</small></button>`).join(""));
   let cur=-1,all=false;
   function mark(){$$(".vstar").forEach(b=>b.classList.toggle("on",+b.dataset.i===cur&&!au.paused));$("#vpp").innerHTML=au.paused?icoPlay:icoPause;$("#vpp").setAttribute("aria-label",au.paused?"Play":"Pause");}
-  function play(i){if(i===cur){au.paused?au.play().catch(()=>{}):au.pause();return}cur=i;const v=L[i];au.src=v.src;au.play().catch(()=>{});pl.hidden=false;$("#vname").textContent=v.n;$("#vtime").textContent="0:00 / "+(v.len||"");$("#vprog").style.width="0";AUDIO.duck(true);mark();}
+  function fail(){const o=$("#vopen");o.classList.add("warn");o.textContent="This phone didn't play it here. Tap to listen";AUDIO.duck(false);mark();}
+  function go2(){const r=au.play();if(r&&r.catch)r.catch(e=>{if(e&&e.name==="AbortError")return;fail()});}
+  function play(i){if(i===cur){au.paused?go2():au.pause();return}cur=i;const v=L[i];const o=$("#vopen");o.href=v.src;o.classList.remove("warn");o.textContent="Not playing? Tap here to open it";
+    au.src=v.src;au.load();go2();pl.hidden=false;$("#vname").textContent=v.n;$("#vtime").textContent="0:00 / "+(v.len||"");$("#vprog").style.width="0";AUDIO.duck(true);mark();}
   sky.addEventListener("click",e=>{const b=e.target.closest(".vstar");if(!b)return;all=false;play(+b.dataset.i)});
-  $("#vpp").onclick=()=>{if(cur<0)return;au.paused?au.play().catch(()=>{}):au.pause()};
+  $("#vpp").onclick=()=>{if(cur<0)return;au.paused?go2():au.pause()};
+  au.addEventListener("error",()=>{if(cur>=0)fail()});
   $("#vall").onclick=()=>{all=true;if(cur>=0&&!au.paused)return;play(cur>=0&&!au.ended?cur:0)};
   au.addEventListener("play",()=>{AUDIO.duck(true);mark()});au.addEventListener("pause",()=>{if(!au.ended)AUDIO.duck(false);mark()});
   au.addEventListener("timeupdate",()=>{$("#vtime").textContent=fmt(au.currentTime)+" / "+fmt(au.duration);$("#vprog").style.width=(au.duration?au.currentTime/au.duration*100:0)+"%"});
