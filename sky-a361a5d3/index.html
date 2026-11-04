@@ -1102,7 +1102,7 @@ async function saveFile(blob,filename){filename=slug(filename.replace(/\.[a-z0-9
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast("saved");return true;}
 const SAVE_NOTE=()=>SITE?"Tap Save to post it straight to WhatsApp or keep it in your photos.":"Saved as a phone-sized picture, ready for your WhatsApp status.";
 const SHEETS={numbers:{title:"Save your numbers",opts:["age","from"]},photos:{title:"Save your snapshots",opts:["from"]},playlist:{title:"Save your playlist",opts:["from"]}};
-const OPT_LABEL={age:"Show my age",from:"Show who it's from"};
+const OPT_LABEL={age:"Show my age",from:"Show it's from Grace & Collins"};
 const optState={age:false,from:false};
 let sheetBlob=null,sheetURL=null,sheetKind=null;
 function optsHtml(keys,scope){return keys.map(k=>`<label class="opt"><input type="checkbox" data-opt="${k}" data-scope="${scope}" ${optState[k]?"checked":""}><span class="sw" aria-hidden="true"></span>${OPT_LABEL[k]}</label>`).join("")}
