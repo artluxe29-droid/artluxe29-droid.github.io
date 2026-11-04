@@ -195,6 +195,26 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
 .cake.out .smoke{animation:smoke 1.6s ease-out forwards}
 @keyframes smoke{0%{opacity:.7;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(8px,-60px) scale(3)}}
 .blowrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.vsky{position:relative;width:min(560px,100%);aspect-ratio:5/4;border-radius:22px;background:rgba(4,8,26,.55);border:1px solid var(--line);overflow:hidden}
+.vlines{position:absolute;inset:0;width:100%;height:100%}
+.vlines line{stroke:rgba(255,216,156,.3);stroke-width:.35;stroke-dasharray:1.2 1.4}
+.vstar{position:absolute;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:10px;background:none;border:0;padding:6px;color:var(--ink);font:700 15px/1.1 var(--head);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.vstar .orb{position:relative;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#FFFDF5 0 22%,#FFE2A8 38%,rgba(255,200,120,.35) 60%,rgba(255,200,120,0) 72%);transform:scale(1.6);animation:vtw 2.6s ease-in-out infinite;animation-delay:calc(var(--k)*-.5s)}
+.vstar .orb::after,.vstar .orb::before{content:"";position:absolute;left:50%;top:50%;background:rgba(255,244,220,.6)}
+.vstar .orb::after{width:40px;height:1.5px;margin:-.75px 0 0 -20px}
+.vstar .orb::before{width:1.5px;height:40px;margin:-20px 0 0 -.75px}
+.vstar small{font:500 11px/1 var(--body);color:var(--muted)}
+.vstar.heard small{color:var(--gold)}
+.vstar.on .orb{animation:vpulse 1s ease-in-out infinite}
+.vstar.on b{color:var(--gold)}
+@keyframes vtw{0%,100%{opacity:.75;transform:scale(1.45)}50%{opacity:1;transform:scale(1.75)}}
+@keyframes vpulse{0%,100%{transform:scale(1.7);filter:drop-shadow(0 0 6px rgba(255,210,122,.9))}50%{transform:scale(2.3);filter:drop-shadow(0 0 16px rgba(255,210,122,1))}}
+.vplayer{display:flex;align-items:center;gap:14px;width:min(560px,100%);padding:12px 16px;border-radius:18px;background:var(--glass);border:1px solid var(--line);text-align:left}
+.vpp{flex:0 0 46px;height:46px;border-radius:50%;border:0;background:var(--gold);color:#241A05;display:grid;place-items:center;cursor:pointer}
+.vinfo{flex:1;min-width:0;display:grid;gap:4px}.vinfo b{font:700 16px var(--head)}.vinfo span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vbar{height:4px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}.vbar i{display:block;height:100%;width:0;background:var(--gold)}
+.verse{max-width:34ch;margin:4px auto 0;padding:14px 18px;border-radius:16px;background:var(--glass);border:1px solid var(--line);font:500 clamp(15px,3.6vw,18px)/1.55 var(--head);color:var(--ink)}
+.verse cite{display:block;margin-top:6px;font:600 13px var(--body);font-style:normal;color:var(--pink);letter-spacing:.04em}
 .testbar{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:36;background:#3A2A06;color:#FFE3A3;border:1px solid rgba(255,210,122,.5);border-radius:99px;padding:6px 14px;font:600 12px var(--body);white-space:nowrap;pointer-events:none}
 
 /* end */
@@ -296,6 +316,18 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <button class="next r" style="--i:4" data-next type="button">One more thing <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
 </div></section>
 
+<!-- 4b · voices -->
+<section class="scene" data-s="m" hidden><div class="inner">
+  <span class="script r" style="--i:0">from the people who love you</span>
+  <h2 class="r" style="--i:1">Messages in the stars</h2>
+  <p class="lead r" style="--i:2">Each star is holding a voice. Tap one to listen.</p>
+  <div class="vsky r" style="--i:3" id="vsky"><svg class="vlines" id="vlines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg></div>
+  <div class="vplayer r" style="--i:4" id="vplayer" hidden><button class="vpp" id="vpp" type="button" aria-label="Pause"></button><div class="vinfo"><b id="vname"></b><span id="vtime"></span><div class="vbar"><i id="vprog"></i></div></div></div>
+  <button class="save r" style="--i:5" id="vall" type="button">Play them all, one after another</button>
+  <button class="next r" style="--i:6" data-next type="button">Keep going <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <audio id="vaudio" preload="none" playsinline></audio>
+</div></section>
+
 <!-- 5 · wheel -->
 <section class="scene" data-s="5" hidden><div class="inner">
   <span class="script r" style="--i:0">feeling lucky?</span>
@@ -324,8 +356,9 @@ h2{font:700 clamp(28px,6vw,46px)/1.12 var(--head);letter-spacing:-.025em;text-wr
   <div class="endtitle r" style="--i:1">Happy birthday</div>
   <h2 class="r" style="--i:2" id="endName"></h2>
   <p class="lead r" style="--i:3">May this year be as bright as tonight's sky.</p>
-  <p class="script pink r" style="--i:4" id="fromText"></p>
-  <button class="next ghost r" style="--i:5" id="replay" type="button">Watch it again</button>
+  <blockquote class="verse r" style="--i:4">"The LORD is my light and my salvation; whom shall I fear? the LORD is the strength of my life; of whom shall I be afraid?"<cite>Psalm 27:1</cite></blockquote>
+  <p class="script pink r" style="--i:5" id="fromText"></p>
+  <button class="next ghost r" style="--i:6" id="replay" type="button">Watch it again</button>
 </div></section>
 
 <div class="lb" id="lb" hidden><button class="ib x" id="lbX" type="button" aria-label="Close photo">✕</button><div id="lbIn"></div></div>
@@ -363,6 +396,7 @@ const CONFIG = {
 };
 // ======================================================================
 Object.assign(CONFIG,{
+ "voices":[{"n":"Daddy","src":"v/0.m4a","len":"0:46"},{"n":"Mummy","src":"v/1.m4a","len":"2:04"},{"n":"Grace","src":"v/2.m4a","len":"0:43"},{"n":"Eri","src":"v/3.m4a","len":"0:43"},{"n":"Moses","src":"v/4.m4a","len":"0:44"}],
  "slug": "sky-a361a5d3",
  "testKey": "5a8b6522",
  "name": "Preshy",
@@ -680,10 +714,10 @@ const SKY=(function(){
   const ease=x=>1-Math.pow(1-x,3);
   function frame(now){
     const dt=Math.min(.05,(now-st.last)/1000);st.last=now;
-    st.cover+=(st.coverT-st.cover)*Math.min(1,dt*.9);st.nameA+=(st.nameT-st.nameA)*Math.min(1,dt*2.2);st.mx+=(st.tmx-st.mx)*.04;st.my+=(st.tmy-st.my)*.04;
+    st.cover+=(st.coverT-st.cover)*Math.min(1,dt*.9);st.nameA+=(st.nameT-st.nameA)*Math.min(1,dt*2.2);st.mx+=(st.tmx-st.mx)*.04;st.my+=(st.tmy-st.my)*.04;if(!isFinite(st.mx+st.my)){st.mx=st.my=st.tmx=st.tmy=0}
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.drawImage(base,st.mx*-8-10,st.my*-8-10,W+20,H+20);
     const vis=1-st.cover*.55;
-    for(const s of stars){const x=s.x+st.mx*-14*s.z,y=s.y+st.my*-10*s.z,ext=Math.max(.1,1-Math.max(0,y/H-.6)*2.2);
+    for(const s of stars){const x=s.x+st.mx*-14*s.z,y=s.y+st.my*-10*s.z;if(!isFinite(x+y))continue;const ext=Math.max(.1,1-Math.max(0,y/H-.6)*2.2);
       const tw=reduce?1:.62+.25*Math.sin(now/1000*s.f1+s.p)+.13*Math.sin(now/1000*s.f2+s.p*2);const al=Math.max(.1,tw)*ext*vis;
       if(s.big){const R=s.r*7,gr=ctx.createRadialGradient(x,y,0,x,y,R);gr.addColorStop(0,s.c);gr.addColorStop(.12,s.c);gr.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=.33*al;ctx.fillStyle=gr;ctx.fillRect(x-R,y-R,2*R,2*R);
         ctx.globalAlpha=.38*al;ctx.strokeStyle=s.c;ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(x-s.r*6,y);ctx.lineTo(x+s.r*6,y);ctx.moveTo(x,y-s.r*6);ctx.lineTo(x,y+s.r*6);ctx.stroke();}
@@ -717,7 +751,7 @@ const SKY=(function(){
   const go=()=>{build();requestAnimationFrame(frame)};
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(go);
   let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(Math.abs(innerWidth-W)>40||Math.abs(innerHeight-H)>150)build()},250)});
-  addEventListener("pointermove",e=>{if(e.pointerType==="mouse"){st.tmx=e.clientX/W-.5;st.tmy=e.clientY/H-.5}});
+  addEventListener("pointermove",e=>{if(e.pointerType==="mouse"&&W>0&&H>0){st.tmx=e.clientX/W-.5;st.tmy=e.clientY/H-.5}});
   return{st,meteor,shower,showName(on){if(on&&st.nameA<.05){st.nameStart=performance.now();for(const s of nstars){s.land=0;s.fl=0}}st.nameT=on?1:0},clear(){st.coverT=0}};
 })();
 
@@ -768,8 +802,9 @@ const hooks={
   1:{enter(){SKY.showName(true);AUDIO.startBg();buildBday()},leave(){SKY.showName(false)}},
   2:{enter:countUp},
   4:{leave:()=>MUSIC.stop()},
-  6:{enter:()=>makeCard()},
-  7:{enter(){SKY.showName(true);SKY.shower(10);setTimeout(()=>confetti(),900)},leave(){SKY.showName(false)}}
+  5:{leave:()=>VOICES.stop()},
+  7:{enter:()=>makeCard()},
+  8:{enter(){SKY.showName(true);SKY.shower(10);setTimeout(()=>confetti(),900)},leave(){SKY.showName(false)}}
 };
 function go(n){
   if(busy||n===cur||n<0||n>LAST)return;busy=true;const from=scenes[cur],to=scenes[n];
@@ -919,6 +954,27 @@ const MUSIC=(function(){
   return{stop:()=>{stop();ytStop()}};
 })();
 
+/* 4b · voices */
+const VOICES=(function(){const L=CONFIG.voices||[];const sky=$("#vsky"),au=$("#vaudio"),pl=$("#vplayer");if(!sky||!L.length)return{stop(){}};
+  const P=[[22,28],[50,15],[78,30],[30,70],[70,68],[50,46],[14,56],[86,56]];
+  const fmt=t=>isFinite(t)?Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0"):"0:00";
+  const icoPlay='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',icoPause='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  const n=Math.min(L.length,P.length),path=[0,1,2,4,3,0].filter(i=>i<n);
+  $("#vlines").innerHTML=path.slice(1).map((i,k)=>`<line x1="${P[path[k]][0]}" y1="${P[path[k]][1]}" x2="${P[i][0]}" y2="${P[i][1]}"/>`).join("");
+  sky.insertAdjacentHTML("beforeend",L.slice(0,n).map((v,i)=>`<button class="vstar" type="button" data-i="${i}" style="left:${P[i][0]}%;top:${P[i][1]}%;--k:${i}" aria-label="Voice note from ${v.n}"><span class="orb"></span><b>${v.n}</b><small>${v.len||"tap to listen"}</small></button>`).join(""));
+  let cur=-1,all=false;
+  function mark(){$$(".vstar").forEach(b=>b.classList.toggle("on",+b.dataset.i===cur&&!au.paused));$("#vpp").innerHTML=au.paused?icoPlay:icoPause;$("#vpp").setAttribute("aria-label",au.paused?"Play":"Pause");}
+  function play(i){if(i===cur){au.paused?au.play().catch(()=>{}):au.pause();return}cur=i;const v=L[i];au.src=v.src;au.play().catch(()=>{});pl.hidden=false;$("#vname").textContent=v.n;$("#vtime").textContent="0:00 / "+(v.len||"");$("#vprog").style.width="0";AUDIO.duck(true);mark();}
+  sky.addEventListener("click",e=>{const b=e.target.closest(".vstar");if(!b)return;all=false;play(+b.dataset.i)});
+  $("#vpp").onclick=()=>{if(cur<0)return;au.paused?au.play().catch(()=>{}):au.pause()};
+  $("#vall").onclick=()=>{all=true;if(cur>=0&&!au.paused)return;play(cur>=0&&!au.ended?cur:0)};
+  au.addEventListener("play",()=>{AUDIO.duck(true);mark()});au.addEventListener("pause",()=>{if(!au.ended)AUDIO.duck(false);mark()});
+  au.addEventListener("timeupdate",()=>{$("#vtime").textContent=fmt(au.currentTime)+" / "+fmt(au.duration);$("#vprog").style.width=(au.duration?au.currentTime/au.duration*100:0)+"%"});
+  au.addEventListener("ended",()=>{const b=$(`.vstar[data-i="${cur}"]`);if(b){b.classList.add("heard");b.querySelector("small").textContent="listened ✓"}
+    if(all&&cur+1<n){const nx=cur+1;cur=-1;setTimeout(()=>play(nx),700)}else{all=false;AUDIO.duck(false);mark()}});
+  return{stop(){all=false;if(!au.paused)au.pause();AUDIO.duck(false)}};
+})();
+
 /* 5 · wheel */
 let WON=null;
 (function(){
@@ -942,7 +998,7 @@ let WON=null;
       if(k<1)requestAnimationFrame(step);else{spinning=false;WON=P[win];store.set("prize",String(win));$("#prizeText").textContent=WON;$("#prize").hidden=false;btn.hidden=true;$("#toCard").hidden=false;$("#again").hidden=!TEST;AUDIO.chime();confetti();SKY.shower(5);}})(t0);}
   const had=store.get("prize");if(had!=null&&!TEST){const i=+had%n;rot=-(i+.5)*a;WON=P[i];$("#prizeLead").textContent="you already spun, and you won";$("#prizeText").textContent=WON;$("#prize").hidden=false;$("#spinBtn").hidden=true;$("#toCard").hidden=false;}
   $("#spinBtn").onclick=spin;$("#again").onclick=()=>{$("#spinBtn").hidden=false;$("#spinBtn").disabled=false;spin()};
-  $("#toCard").onclick=()=>go(6);
+  $("#toCard").onclick=()=>go(7);
 })();
 
 /* ======================= SHAREABLE IMAGES & VIDEO ======================= */
